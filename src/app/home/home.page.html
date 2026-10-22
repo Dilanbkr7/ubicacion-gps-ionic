@@ -1,56 +1,63 @@
 <ion-header>
-  <ion-toolbar>
-    <ion-title>Mi Ubicación GPS (Standalone)</ion-title>
-  </ion-toolbar>
+  <ion-toolbar><ion-title>Mi ubicación GPS</ion-title></ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding location-content">
+<ion-content class="ion-padding">
+  <main>
+    <p class="eyebrow">DEBER · IONIC + CAPACITOR</p>
+    <h1>Tu ubicación, lista para compartir</h1>
+    <p class="intro">Obtén tus coordenadas, consulta una ruta y guarda sus enlaces en archivos de texto.</p>
 
-  <ion-card class="coordinates-card">
-    <ion-card-header>
-      <ion-card-title>Coordenadas actuales</ion-card-title>
-    </ion-card-header>
+    <ion-card>
+      <ion-card-header><ion-card-title>Coordenadas actuales</ion-card-title></ion-card-header>
+      <ion-card-content>
+        <div class="coordinates">
+          <div><span>Latitud</span><strong>{{ latitude() === null ? 'Sin ubicación' : (latitude() | number:'1.6-6') }}</strong></div>
+          <div><span>Longitud</span><strong>{{ longitude() === null ? 'Sin ubicación' : (longitude() | number:'1.6-6') }}</strong></div>
+        </div>
+        @if (updatedAt()) {
+          <p>Última lectura: {{ updatedAt() | date:'HH:mm:ss' }} · Precisión aproximada: {{ accuracy() | number:'1.0-0' }} m</p>
+        }
+        <p class="status" role="status">{{ status() }}</p>
+        @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+        <div class="actions">
+          <ion-button (click)="getLocation()" [disabled]="locating() || tracking() || stopping() || starting()">
+            {{ locating() ? 'Buscando ubicación...' : 'Obtener ubicación actual' }}
+          </ion-button>
+          <ion-button fill="outline" (click)="startTracking()" [disabled]="tracking() || locating() || stopping() || starting()">Iniciar seguimiento</ion-button>
+          <ion-button color="danger" fill="outline" (click)="stopTracking()" [disabled]="!tracking() || stopping()">Detener seguimiento</ion-button>
+        </div>
+        <p class="hint">Detener conserva las últimas coordenadas y su hora; dejan de actualizarse.</p>
+        <ion-button fill="clear" size="small" (click)="clearLocation()" [disabled]="!hasLocation() || locating() || stopping()">Borrar coordenadas</ion-button>
+      </ion-card-content>
+    </ion-card>
 
-    <ion-card-content>
-      <p>
-        <strong>Latitud:</strong>
-        {{ latitude() !== null ? latitude() : 'No disponible' }}
-      </p>
+    <div class="grid">
+      <ion-card>
+        <ion-card-header><ion-card-title>01 · Mi ubicación</ion-card-title></ion-card-header>
+        <ion-card-content>
+          <p>Abre la última posición obtenida en Google Maps.</p>
+          @if (mapUrl()) {
+            <a class="map-link" [href]="mapUrl()" target="_blank" rel="noopener noreferrer">Ver mi ubicación en Google Maps ↗</a>
+          } @else { <p class="hint">Primero obtén tu ubicación para habilitar el enlace.</p> }
+          <ion-button expand="block" (click)="saveLocation()" [disabled]="!mapUrl() || saving()">Guardar ubicación en TXT</ion-button>
+        </ion-card-content>
+      </ion-card>
 
-      <p>
-        <strong>Longitud:</strong>
-        {{ longitude() !== null ? longitude() : 'No disponible' }}
-      </p>
-    </ion-card-content>
-  </ion-card>
-
-  <ion-text
-    class="status-message"
-    [color]="error() ? 'danger' : 'dark'">
-    <p>{{ error() || status() }}</p>
-  </ion-text>
-
-  <ion-button
-    expand="block"
-    class="get-button"
-    (click)="getLocation()">
-    OBTENER UBICACIÓN ACTUAL
-  </ion-button>
-
-  <ion-button
-    expand="block"
-    class="start-button"
-    [disabled]="tracking()"
-    (click)="startTracking()">
-    INICIAR SEGUIMIENTO
-  </ion-button>
-
-  <ion-button
-    expand="block"
-    class="stop-button"
-    [disabled]="!tracking()"
-    (click)="stopTracking()">
-    DETENER SEGUIMIENTO
-  </ion-button>
-
+      <ion-card>
+        <ion-card-header><ion-card-title>02 · Mi ruta</ion-card-title></ion-card-header>
+        <ion-card-content>
+          <label for="destination">Destino: parque, dirección o latitud,longitud</label>
+          <input id="destination" type="text" [ngModel]="destination()" (ngModelChange)="destination.set($event)" placeholder="Ejemplo: Parque La Carolina, Quito" />
+          <p class="hint">El origen es la última ubicación obtenida. Puedes cambiar el destino.</p>
+          @if (routeUrl()) {
+            <a class="map-link" [href]="routeUrl()" target="_blank" rel="noopener noreferrer">Ver ruta en Google Maps ↗</a>
+          }
+          <ion-button expand="block" (click)="saveRoute()" [disabled]="!routeUrl() || saving()">Guardar ruta en TXT</ion-button>
+        </ion-card-content>
+      </ion-card>
+    </div>
+    @if (fileMessage()) { <p class="file-message" [class.error]="fileError()" role="status">{{ fileMessage() }}</p> }
+    <p class="hint footer">En el navegador, revisa Descargas. En Android, los TXT se guardan en Documentos/GPS-Ionic.</p>
+  </main>
 </ion-content>
